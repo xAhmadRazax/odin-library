@@ -1,4 +1,4 @@
-const myLibrary = [new Book("Qq", "qq", "qq", 3, "aa", "Reading", 133)];
+const myLibrary = [];
 
 function Book(
   title,
