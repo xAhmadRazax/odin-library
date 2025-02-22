@@ -52,16 +52,6 @@ function isValidURL(url) {
     return false; // It's NOT a valid URL
   }
 }
-function resetFormTemplate(formTemplate) {
-  console.log(formTemplate);
-  formTemplate.querySelector("[data-form-title]").textContent =
-    "Book Information";
-
-  formTemplate.querySelector("[data-form-submit]").textContent =
-    "Add to Library";
-
-  formTemplate.reset();
-}
 const addItemToLibrary = (book) => {
   myLibrary.push(book);
 };
@@ -75,6 +65,7 @@ function closeDialog(dialogEl) {
   return dialogEl.close();
 }
 function addChildToParent(parent, child, resetChildren = false) {
+  console.log(parent, child);
   if (resetChildren) {
     parent.replaceChildren();
   }
@@ -192,16 +183,17 @@ function populatingForm(item, formEl) {
     formEl.querySelector("#img-url").value = item.imgURL;
   }
 }
-function handleEditLibraryItem(e, dialogEl, formElTemplate) {
+function handleEditLibraryItem(e, dialogEl, formEl) {
   const targetEl = e.target.closest("[data-edit-item]");
   if (!targetEl) {
     return;
   }
+  const formElCopy = formEl.cloneNode(true);
   const itemToUpdateID = e.target.closest("[data-item]").dataset.item;
-  formElTemplate.setAttribute("data-item-update", itemToUpdateID);
-  addChildToParent(dialogEl, formElTemplate, true);
+  formEl.setAttribute("data-item-update", itemToUpdateID);
 
-  populatingForm(myLibrary[itemToUpdateID], formElTemplate);
+  populatingForm(myLibrary[itemToUpdateID], formEl);
+  addChildToParent(dialogEl, formEl, true);
   showDialog(dialogEl);
 }
 document.addEventListener("DOMContentLoaded", (e) => {
@@ -226,7 +218,7 @@ document.addEventListener("DOMContentLoaded", (e) => {
     const status = e.target.querySelector("#status").value;
     const ratings = e.target.querySelector("#rating").value || 0;
     const duration = e.target.querySelector("#duration").value;
-    const pagesRead = e.target.querySelector("#pages-read").value || 0;
+    const pagesRead = e.target.querySelector("#pages-read").value || 1;
     const desc = e.target.querySelector("#desc").value;
 
     if (title.trim().length === 0) {
@@ -265,10 +257,9 @@ document.addEventListener("DOMContentLoaded", (e) => {
         imgURL
       );
       replaceLibraryItem(myLibrary[itemToUpdateID], itemToUpdateID, template);
-      console.log(templateFormEl);
-      e.target.removeAttribute("data-item-update", itemToUpdateID);
-      resetFormTemplate(templateFormEl);
       closeDialog(dialogEl);
+      console.log(templateFormEl);
+
       return;
     }
     const newBook = new Book(
@@ -287,16 +278,12 @@ document.addEventListener("DOMContentLoaded", (e) => {
     addItemToLibrary(newBook);
 
     renderLibraryItem(newBook, newLibraryItemId, template, libraryList);
-    e.target.reset();
     closeDialog(dialogEl);
   });
   renderLibraryItems(myLibrary, template, libraryList);
-  dialogEl.addEventListener("close", (e) => {
-    removeChildren(dialogEl); // Clear dialog content
-    resetFormTemplate(templateFormEl);
-  });
-
   document.body.addEventListener("click", (e) => {
+    // console.log(templateFormEl, template);
+    // handling add new item to collection button
     handleAddItemToLibrary(e, dialogEl, templateFormEl);
     handleCancelBtn(e, dialogEl);
     handleDeleteItemBtn(e, dialogEl, templateConfirmModal);
