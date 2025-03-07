@@ -12,7 +12,7 @@
     <!-- overlays -->
     <template data-template>
       <!-- library item template -->
-      <li data-item class="library__item">
+      <li data-library-item class="library__item">
         <article class="library__item-container">
           <figure class="library__item-img">
             <img data-img src="./assets/imgs/The_Hobbit.jpg" alt="item__img" />
@@ -141,116 +141,118 @@
       <!-- end of library item template -->
 
       <!-- add item  -->
-      <form data-item-form method="dialog" class="form__add-item">
+      <form data-library-item-form method="dialog" class="form form__add-item">
         <fieldset>
           <legend data-form-title class="form-title">Book Information</legend>
-          <div class="form-control">
-            <label class="form-control__label" for="title"> Title</label>
-            <input
-              type="text"
-              class="form-control__input"
-              id="title"
-              required
-              min="2"
-              name="title"
-            />
-          </div>
-          <div class="form-control">
-            <label class="form-control__label" for="author"> Author </label>
-            <input
-              name="author"
-              type="text"
-              class="form-control__input"
-              id="author"
-              required
-              min="2"
-            />
-          </div>
-          <div class="form-control__group">
-            <div class="form-control">
-              <label class="form-control__label" for="genre"> Genre</label>
-              <input
-                name="genre"
-                type="text"
-                class="form-control__input"
-                id="genre"
-                required
-                min="2"
-              />
+          <div data-form-field-container class="form-control__container">
+            <div class="form-control__group">
+              <div class="form-control">
+                <label class="form-control__label" for="title"> Title</label>
+                <input
+                  type="text"
+                  class="form-control__input"
+                  id="title"
+                  required
+                  min="2"
+                  name="title"
+                />
+              </div>
+              <div class="form-control">
+                <label class="form-control__label" for="author"> Author </label>
+                <input
+                  name="author"
+                  type="text"
+                  class="form-control__input"
+                  id="author"
+                  required
+                  min="2"
+                />
+              </div>
+              <div class="form-control">
+                <label class="form-control__label" for="genre"> Genre</label>
+                <input
+                  name="genre"
+                  type="text"
+                  class="form-control__input"
+                  id="genre"
+                  required
+                  min="2"
+                />
+              </div>
+              <div class="form-control">
+                <label class="form-control__label" for="img-url">
+                  Image URL</label
+                >
+                <input
+                  name="img-url"
+                  type="url"
+                  class="form-control__input"
+                  id="img-url"
+                  min="2"
+                />
+              </div>
             </div>
-            <div class="form-control">
-              <label class="form-control__label" for="img-url">
-                Image URL</label
-              >
-              <input
-                name="img-url"
-                type="url"
-                class="form-control__input"
-                id="img-url"
-                min="2"
-              />
-            </div>
-          </div>
-          <div class="form-control__group">
-            <div class="form-control">
-              <label class="form-control__label" for="status"> Status</label>
-              <select name="status" id="status" class="form-control__input">
-                <option selected value="reading">Reading</option>
-                <option value="finished">Finished</option>
-                <option value="dropped">Dropped</option>
-              </select>
-            </div>
+            <div class="form-control__group">
+              <div class="form-control">
+                <label class="form-control__label" for="status"> Status</label>
+                <select name="status" id="status" class="form-control__input">
+                  <option selected value="reading">Reading</option>
+                  <option value="finished">Finished</option>
+                  <option value="dropped">Dropped</option>
+                </select>
+              </div>
 
-            <div class="form-control">
-              <label class="form-control__label" for="rating"> Rating </label>
-              <input
-                name="rating"
-                type="number"
-                step="1"
-                min="1"
-                max="5"
-                class="form-control__input"
-                id="rating"
-              />
-            </div>
+              <div class="form-control">
+                <label class="form-control__label" for="rating"> Rating </label>
+                <input
+                  name="rating"
+                  type="number"
+                  step="1"
+                  min="1"
+                  max="5"
+                  class="form-control__input"
+                  id="rating"
+                />
+              </div>
 
+              <div class="form-control">
+                <label class="form-control__label" for="duration">
+                  Total Pages
+                </label>
+                <input
+                  min="0"
+                  name="duration"
+                  type="number"
+                  step="1"
+                  class="form-control__input"
+                  id="duration"
+                  required
+                />
+              </div>
+              <div class="form-control">
+                <label class="form-control__label" for="pages-read">
+                  Pages Read
+                </label>
+                <input
+                  name="pages-read"
+                  type="number"
+                  step="1"
+                  min="0"
+                  class="form-control__input"
+                  id="pages-read"
+                />
+              </div>
+            </div>
             <div class="form-control">
-              <label class="form-control__label" for="duration">
-                Total Pages
-              </label>
-              <input
-                min="0"
-                name="duration"
-                type="number"
-                step="1"
-                class="form-control__input"
-                id="duration"
+              <label class="form-control__label" for="desc"> Description</label>
+              <textarea
+                name="desc"
                 required
-              />
-            </div>
-            <div class="form-control">
-              <label class="form-control__label" for="pages-read">
-                Pages Read
-              </label>
-              <input
-                name="pages-read"
-                type="number"
-                step="1"
-                min="0"
                 class="form-control__input"
-                id="pages-read"
-              />
+                id="desc"
+                rows="4"
+              ></textarea>
             </div>
-          </div>
-          <div class="form-control">
-            <label class="form-control__label" for="desc"> Description</label>
-            <textarea
-              name="desc"
-              required
-              class="form-control__input"
-              id="desc"
-              rows="4"
-            ></textarea>
           </div>
 
           <div class="form__footer">
@@ -260,6 +262,92 @@
             <button data-form-submit class="btn btn--accent">
               Add to Library
             </button>
+          </div>
+        </fieldset>
+      </form>
+      <!-- form schema -->
+      <form
+        data-category-schema-form
+        method="dialog"
+        class="form form__add-items form--schema"
+      >
+        <fieldset>
+          <legend data-form-title class="form-title">
+            Create New Category
+          </legend>
+          <div class="form-control__container" data-form-field-container>
+            <div class="form-control__group grid-col-2-70-30">
+              <div class="form-control">
+                <label class="form-control__label" for="title">
+                  field Name</label
+                >
+                <input
+                  type="text"
+                  class="form-control__input"
+                  id="title"
+                  required
+                  min="2"
+                  name="title"
+                  value="title"
+                  readonly
+                />
+              </div>
+              <div class="form-control">
+                <label class="form-control__label" for="title">
+                  field type</label
+                >
+                <select name="" id="" class="form-control__input">
+                  <option value="">text</option>
+                  <option value="">long Text</option>
+                  <option value="">singleValue</option>
+                  <option value="">multiValues</option>
+                  <option value="">image url</option>
+                </select>
+              </div>
+            </div>
+
+            <button data-add-schema-attribute class="btn" type="button">
+              Add another field
+            </button>
+          </div>
+          <div class="form__footer">
+            <button data-dialog-cancel class="btn btn--danger" type="button">
+              Cancel
+            </button>
+            <button data-form-submit class="btn btn--accent">
+              Add Category
+            </button>
+          </div>
+        </fieldset>
+      </form>
+
+      <!-- form show categories -->
+
+      <form data-categories-form method="dialog" class="form form--height-auto">
+        <fieldset>
+          <legend data-form-title class="form-title">
+            Select/Create a Category
+          </legend>
+          <div class="form-control__container">
+            <div class="form-control">
+              <label class="form-control__label" for="category">
+                Select a Category</label
+              >
+              <select
+                data-category-select-input
+                name="status"
+                id="category"
+                required
+                class="form-control__input"
+              ></select>
+            </div>
+          </div>
+
+          <div class="form__footer">
+            <button data-dialog-cancel class="btn btn--danger" type="button">
+              Cancel
+            </button>
+            <button data-form-submit class="btn btn--accent">Next</button>
           </div>
         </fieldset>
       </form>
@@ -343,7 +431,7 @@
 
           <div class="library__body">
             <div class="library__add-btn">
-              <button data-add-item class="btn" tabindex="0">
+              <button data-add-library-item class="btn" tabindex="0">
                 Add to Collection
               </button>
             </div>
@@ -357,5 +445,13 @@
     <footer class="footer">
       <small>&copy; <time>2025</time> OmniShelf, ALL RIGHTS RESERVED. </small>
     </footer>
+
+    <script>
+      // document
+      //   .querySelector("[data-add-item]")
+      //   .addEventListener("click", (e) => {
+      //     document.querySelector("[data-dialog]").showModal();
+      //   });
+    </script>
   </body>
 </html>

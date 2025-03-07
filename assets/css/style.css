@@ -219,13 +219,16 @@ main {
   grid-template-rows: min-content;
   /* gap: 1.5rem; */
 }
-
+.grid-col-2-60-40 {
+  grid-template-columns: 6fr 0.4fr;
+}
 /* dialog */
 
 dialog {
   border-radius: 9px;
   box-shadow: 0 0 2rem 2px oklch(from var(--COLOR-PRIMARY-200) l c h / 40%);
-  background-color: var(--color-slate-700);
+  background-color: oklch(from var(--color-slate-950) l c h / 50%);
+  backdrop-filter: blur(0.5rem);
   border-color: var(--color-slate-600);
   color: var(--COLOR-PRIMARY-100);
 }
@@ -234,7 +237,79 @@ dialog::backdrop {
   background-color: rgba(0, 0, 0, 0.59);
   backdrop-filter: blur(0.5rem);
 }
+dialog,
+dialog::backdrop {
+  transition: 0.1s ease-in-out;
+  transition-property: scale, translate, display, overlay, opacity,
+    border-radius;
+  transition-behavior: allow-discrete;
+}
+dialog {
+  translate: -100vw 0;
+  &::backdrop {
+    opacity: 0;
+    scale: 0;
+  }
+}
+dialog[open] {
+  translate: 0 0;
+  &::backdrop {
+    scale: 1;
+    border-radius: revert;
+    opacity: 1;
+  }
+}
 
+@starting-style {
+  dialog[open] {
+    translate: 100vw 0;
+    &::backdrop {
+      scale: 0;
+      opacity: 0;
+      border-radius: 9999px;
+    }
+  }
+}
+
+.ani_slideToLeftSlideInFromRight {
+  animation: slideToLeftSlideInFromRight 1s ease-in-out forwards;
+}
+
+@keyframes slideToLeftSlideInFromRight {
+  45% {
+    translate: -100vw 0;
+    opacity: 0;
+  }
+  50% {
+    translate: 100vw 0;
+    opacity: 0;
+  }
+  100% {
+    translate: 0 0;
+    opacity: 1;
+  }
+}
+dialog.slide_to_left {
+  translate: 0 0;
+  opacity: 1;
+  scale: 1;
+}
+dialog.slide_to_left.play {
+  opacity: 0;
+  scale: 0.7;
+  translate: -100vw 0;
+}
+
+dialog.slide_from_right {
+  translate: 100vw 0 !important;
+  /* opacity: 0; */
+  /* scale: 0.7; */
+}
+dialog.slide_from_right.play {
+  opacity: 1;
+  scale: 1;
+  translate: 0 0 !important;
+}
 /*
 ------------------------------------------
 |   HEADER                               |
@@ -562,16 +637,53 @@ fieldset {
   border: none;
 }
 
-dialog:has(.form__add-item) {
+/* dialog:has(.form__add-item, .form--schema) { */
+dialog:has(.form) {
   max-width: 50rem;
   width: 80%;
 }
-.form__add-item {
-  padding: 1rem;
 
-  fieldset {
-    display: grid;
-    gap: 1.5rem;
+.form:not(.form--height-auto) {
+  height: min(60rem, 80vh);
+  position: relative;
+}
+fieldset {
+  height: 100%;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 2rem;
+  padding-inline: 0.5rem;
+  container-type: inline-size;
+}
+
+.form-control__container {
+  overflow-y: auto;
+  gap: 2rem;
+  display: grid;
+  grid-auto-rows: min-content;
+}
+
+.form--schema .form-control__container {
+  gap: 3rem 1.5rem;
+}
+@container (width > 400px) {
+  .form--schema .form-control__container {
+    gap: 2rem 1.5rem;
+  }
+}
+.form {
+  padding: 2rem;
+}
+
+.form--schema {
+  padding-block: 2rem;
+}
+.form--schema {
+  padding-inline-start: 2rem;
+  padding-inline-end: revert;
+
+  .form-control__input {
+    max-width: 43rem;
   }
 }
 .form-title {
@@ -585,14 +697,31 @@ dialog:has(.form__add-item) {
   flex-direction: column;
   gap: 0.5rem;
 }
+
 .form-control__group {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+
   gap: 1.5rem 1rem;
+  grid-template-columns: 1fr 1fr;
 }
+
+.form--schema .form-control__group {
+  max-width: 315px;
+}
+@container (width > 350px) {
+  .form--schema .form-control__group {
+    max-width: revert;
+  }
+  .grid-col-2-70-30 {
+    grid-template-columns: 7fr 3fr;
+    grid-template-columns: minmax(auto, 28rem) minmax(auto, 14rem);
+  }
+}
+
 .form-control__label {
   font-size: 1.8rem;
   font-weight: 600;
+  text-transform: capitalize;
 }
 .form-control__input {
   appearance: none;
@@ -614,9 +743,15 @@ dialog:has(.form__add-item) {
   display: flex;
   justify-content: space-between;
 }
-
+button[data-add-schema-attribute] {
+  max-width: 43rem;
+}
 select.form-control__input {
   line-height: revert;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black"><path d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 20px;
 }
 textarea.form-control__input {
   height: auto;
