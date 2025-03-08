@@ -26,7 +26,7 @@ class Library {
   static myLibrary = [];
 
   static addItemToLibrary(item) {
-    if (!item instanceof libraryItem) {
+    if (!item instanceof LibraryItem) {
       throw new Error("invalid Library item");
     }
 
@@ -37,11 +37,15 @@ class Library {
     return this.myLibrary;
   };
   static getLibraryItem(item) {
-    if (!item instanceof libraryItem) {
+    if (!item instanceof LibraryItem) {
       throw new Error("invalid Library item");
     }
 
     return this.myLibrary.find((libraryItem) => item.id === libraryItem.id);
+  }
+
+  static getItemsCategory() {
+    return this.myLibrary.map((el) => el.category);
   }
 }
 
@@ -109,8 +113,9 @@ class SchemaType {
       validator: null,
       type: validType.key ? validType.key : "string",
     };
-    if (type.key === "imgURL") {
+    if (type === "imgURL") {
       this[attributeName] = { validator: this.isImgUrl };
+      this.hasImage = true;
     }
     if (validator !== "_" || validator) {
       this[attributeName].validator = validator;
@@ -162,7 +167,7 @@ class SchemaType {
     return this.isValidType.find((typeEl) => typeEl.key === type);
   }
 }
-class libraryItem {
+class LibraryItem {
   id;
   constructor(schema) {
     if (!schema instanceof SchemaType) {
@@ -174,26 +179,44 @@ class libraryItem {
     }
 
     this.id = Date.now();
+
+    console.log(this, "schema maa....");
   }
 
   setAttributeValue(attributeName, value) {
+    console.log(this, "yea its p....a....i....n");
     if (!Object.hasOwn(this, attributeName)) {
       throw new Error("Property does not exist");
     }
 
-    if (!this[attributeName]?.validate(value)) {
+    if (
+      this[attributeName].validator &&
+      !this[attributeName]?.validator(value)
+    ) {
       throw new Error(
         `Validator failed for ${attributeName} bad value ${value}`
       );
     }
-    this[attributeName] = value;
+    this[attributeName].value = value
+      .replace(/[-_]/g, " ")
+      .split(" ")
+      .map((el) => el[0].toUpperCase() + el.slice(1))
+      .join(" ");
   }
 
   changeAttributeValue(attributeName, value) {
     if (!Object.hasOwn(this, attributeName)) {
       throw new Error("Property does not exist");
     }
-    this[attributeName] = value;
+    if (
+      this[attributeName].validator &&
+      !this[attributeName]?.validator(value)
+    ) {
+      throw new Error(
+        `Validator failed for ${attributeName} bad value ${value}`
+      );
+    }
+    this[attributeName].value = value;
   }
   deleteAttribute(attributeName) {
     if (!Object.hasOwn(this, attributeName)) {
@@ -212,11 +235,8 @@ bookSchema.addAttribute("pages", "text");
 
 LibrarySchema.addToSchemas(bookSchema);
 
-const bookItem = new libraryItem(bookSchema);
+const bookItem = new LibraryItem(bookSchema);
 
-console.log(bookItem);
-
-console.log(bookItem);
 class ViewController {
   static #modalEl = document.querySelector("[data-dialog]");
   static #template = document
@@ -239,6 +259,19 @@ class ViewController {
       throw new Error("Modal dialog does not exist.");
     }
     this.#modalEl.showModal();
+  }
+  static #showPopUp(message) {
+    const popUpElStr = `    
+    <dialog data-popup class="popup">
+      <div>${message}</div>
+    </dialog>`;
+    document.body.insertAdjacentHTML("afterbegin", popUpElStr);
+    document.querySelector("[data-popup]").show();
+
+    setTimeout(() => {
+      document.querySelector("[data-popup]").close();
+      document.querySelector("[data-popup]").remove();
+    }, 3000);
   }
   static #closeModal() {
     if (!this.#modalEl) {
@@ -268,7 +301,110 @@ class ViewController {
     this.#modalEl.replaceChildren();
     this.#modalEl.append(childElFrag);
   }
-  // static appendChildrenToModal(children) {}
+
+  static #updateFilter(selectedCategory) {
+    const filterSelectContainer = document.querySelector(
+      "[data-filter-container]"
+    );
+    let filterSelect = filterSelectContainer.querySelector("[data-filter]");
+
+    if (Library.getItemsCategory <= 1) {
+      return;
+    }
+    if (!filterSelect) {
+      filterSelectContainer.insertAdjacentHTML(
+        "afterbegin",
+        `           <label for="filter">Filter by:</label>
+              <select data-filter name="filter" id="filter">
+              </select>`
+      );
+
+      filterSelect = filterSelectContainer.querySelector("[data-filter]");
+    }
+
+    // Check if the option already exists
+    let optionExists = Array.from(filterSelect.options).some(
+      (option) => option.value === selectedCategory
+    );
+
+    // If it doesn't exist, add the new option
+    if (!optionExists) {
+      const newOption = document.createElement("option");
+      newOption.value = selectedCategory;
+      newOption.textContent = selectedCategory;
+      filterSelect.appendChild(newOption);
+    }
+
+    // Set the selected value
+    filterSelect.value = selectedCategory;
+  }
+
+  static #appendCardToDom(itemData) {
+    const cardContainerEl = document.querySelector("[data-library-list]");
+
+    const libraryItemContainer = document.createElement("li");
+    libraryItemContainer.classList.add("library__item");
+    libraryItemContainer.setAttribute("data-item", itemData.id);
+
+    const libraryItem = document.createElement("article");
+    libraryItem.classList.add("library__item-container");
+
+    libraryItem.insertAdjacentHTML(
+      "afterbegin",
+      ` 
+    <div class="library__item-text-container">
+       <header class="library__item-header">
+         <h2 data-title class="library__item-heading text-clamp-2">
+           Eclipse of the Moon
+         </h2>
+       </header>
+       <div data-attributes class="attributesContainer">
+       </div>           
+       <footer class="header__item-footer">
+          <button data-delete-item="" class="btn btn--del">Delete</button>
+          <button data-edit-item="" class="btn header__item-btn-edit">Edit</button>
+        </footer>
+     </div>   
+      `
+    );
+    const dataAttributes = libraryItem.querySelector("[data-attributes]");
+    for (const [key, value] of Object.entries(itemData)) {
+      if (key === "id" || key === "category" || key === "hasImage") {
+        continue;
+      }
+      if (key === "hasImage" && itemData[key]) {
+        libraryItem.classList.add("library__item--img");
+        libraryItem.insertAdjacentHTML(
+          "afterbegin",
+          `
+            <figure class="library__item-img">
+              <img data-img="" src="${itemData[key].value}" alt="item__img" />
+            </figure>
+          `
+        );
+      }
+      if (key === "title") {
+        libraryItem.querySelector("[data-title]").textContent =
+          itemData[key].value;
+      } else {
+        dataAttributes.insertAdjacentHTML(
+          "afterbegin",
+          `         
+          <span class="attribute-name">${key}</span
+         ><span class="attribute-value">${itemData[key].value}</span>`
+        );
+      }
+    }
+    console.log(itemData.category);
+
+    this.#updateFilter(itemData.category.toLowerCase());
+
+    libraryItemContainer.append(libraryItem);
+    cardContainerEl.append(libraryItemContainer);
+
+    // append card
+  }
+  static appendChildrenToModal(children) {}
   static init() {
     const addLibraryBtnClickHandler = (e) => {
       if (e.target.closest("[data-add-library-item]")) {
@@ -464,10 +600,13 @@ class ViewController {
           // slide the form to the left and remove > add a new form > slide from right to middle
         }
 
+        // showing add library item form
+
         if (LibrarySchema.getSchema(category)) {
           const itemSchema = LibrarySchema.getSchema(category);
           console.log(Object.keys(itemSchema));
           const libraryItemForm = this.#templateLibraryItemForm.cloneNode(true);
+          libraryItemForm.setAttribute("data-category", itemSchema.id);
           const formTitle = libraryItemForm.querySelector("[data-form-title]");
           const formFieldsContainer = libraryItemForm.querySelector(
             "[data-form-field-container]"
@@ -479,7 +618,7 @@ class ViewController {
           const formControlGroup = document.createElement("div");
           formControlGroup.classList.add("form-control__group");
           for (const key in itemSchema) {
-            if (key === "id") {
+            if (key === "id" || key === "hasImage") {
               continue;
             }
 
@@ -495,7 +634,7 @@ class ViewController {
                 `
                   <label class="form-control__label" for="${key.toLowerCase()}">${key}</label>
                   <textarea
-                  name="${key.toLowerCase()}"
+                  name="${key}"
                   required
                   class="form-control__input"
                   id="${key.toLowerCase()}"
@@ -517,7 +656,7 @@ class ViewController {
                   id="${key.toLowerCase()}"
                   required
                   min="2"
-                  name="${key.toLowerCase()}"
+                  name="${key}"
                 />
               </div>`
               );
@@ -574,74 +713,36 @@ class ViewController {
         console.log(newSchema);
         LibrarySchema.addToSchemas(newSchema);
 
+        this.#showPopUp(`${newSchema.category} Schema added to database `);
         // Log the data (or send it to a server)
         // console.log("Form Data:", data);
       }
 
       // library item form subbmission handler
-
-      console.log(e.target);
       if (e.target.closest("[data-library-item-form]")) {
         const formData = new FormData(e.target);
+        const itemSchema = LibrarySchema.getSchema(e.target.dataset.category);
+        const libraryItem = new LibraryItem(itemSchema);
 
-        for (const [key, value] of formData.entries()) console.log(key, value);
+        for (const [key, value] of formData.entries()) {
+          libraryItem.setAttributeValue(key, value);
+        }
+
+        Library.addItemToLibrary(libraryItem);
+
+        this.#showPopUp(`${libraryItem.category} item added to the database`);
+
+        //  adding card to the Dom
+        console.log(libraryItem);
+
+        this.#appendCardToDom(libraryItem);
       }
 
       return;
     });
-
-    // form submission handlers
-    // this.templateCategoriesForm.addEventListener("submit", (e) => {
-    //   e.preventDefault();
-
-    //   console.log("Wtf is going on");
-
-    //   console.log(e);
-    // });
   }
 }
 document.addEventListener("DOMContentLoaded", (e) => {
-  //   const addAttributeItem = document.querySelector("[data-add-attribute]");
-  //   addAttributeItem.addEventListener("click", function (e) {
-  //     const attributesEl = document.createElement("div");
-  //     attributesEl.innerHTML = `<div class="form-control__group grid-col-2-70-30">
-  //   <div class="form-control">
-  //     <label class="form-control__label" for="title">
-  //       field Name</label
-  //     >
-  //     <input
-  //       type="text"
-  //       class="form-control__input"
-  //       id="title"
-  //       required
-  //       min="2"
-  //       name="title"
-  //       value="title"
-  //       readonly
-  //     />
-  //   </div>
-  //   <div class="form-control">
-  //     <label class="form-control__label" for="title">
-  //       field type</label
-  //     >
-  //     <select name="" id="" class="form-control__input">
-  //       <option value="">text</option>
-  //       <option value="">long Text</option>
-  //       <option value="">singleValue</option>
-  //       <option value="">multiValues</option>
-  //       <option value="">image url</option>
-  //     </select>
-  //   </div>
-  // </div>`;
-  //     console.log(
-  //       attributesEl,
-  //       document.querySelector("[data-form-container]"),
-  //       document.querySelector("[data-add-attribute]")
-  //     );
-  //     const parentEl = document.querySelector("[data-form-container]");
-  //     const childEl = document.querySelector("[data-add-attribute]");
-  //     parentEl.insertBefore(attributesEl, childEl);
-  //   });
   ViewController.init();
 });
 console.log(

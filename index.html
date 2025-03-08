@@ -12,7 +12,7 @@
     <!-- overlays -->
     <template data-template>
       <!-- library item template -->
-      <li data-library-item class="library__item">
+      <li data-library-itemsssa class="library__item">
         <article class="library__item-container">
           <figure class="library__item-img">
             <img data-img src="./assets/imgs/The_Hobbit.jpg" alt="item__img" />
@@ -132,6 +132,40 @@
             <footer class="header__item-footer">
               <button data-delete-item class="btn">Delete</button>
               <button data-edit-item class="btn header__item-btn-edit">
+                Edit
+              </button>
+            </footer>
+          </div>
+        </article>
+      </li>
+
+      <li data-library-item class="library__item">
+        <article class="library__item-container library__item--img">
+          <figure class="library__item-img">
+            <img data-img="" src="./assets/imgs/default.avif" alt="item__img" />
+          </figure>
+          <div class="library__item-text-container">
+            <header class="library__item-header">
+              <h2 data-title="" class="library__item-heading text-clamp-2">
+                Eclipse of the Moon
+              </h2>
+            </header>
+            <div class="attributesContainer">
+              <span class="attribute-name">artist</span
+              ><span class="attribute-value"> Lunar Waves</span>
+              <span class="attribute-name">album</span
+              ><span class="attribute-value"> Celestial Echoes</span>
+              <span class="attribute-name">genre</span
+              ><span class="attribute-value"> Synthwave</span>
+              <span class="attribute-name">duration</span
+              ><span class="attribute-value"> 3:45</span>
+              <span class="attribute-name">releaseYear</span
+              ><span class="attribute-value"> 2024</span>
+            </div>
+
+            <footer class="header__item-footer">
+              <button data-delete-item="" class="btn btn--del">Delete</button>
+              <button data-edit-item="" class="btn header__item-btn-edit">
                 Edit
               </button>
             </footer>
@@ -436,7 +470,55 @@
               </button>
             </div>
 
-            <ul data-library-list class="library__list"></ul>
+            <div data-filter-container class="category__filter"></div>
+
+            <ul data-library-list class="library__list">
+              <li data-item="0" class="library__item">
+                <article class="library__item-container library__item--img">
+                  <figure class="library__item-img">
+                    <img
+                      data-img=""
+                      src="./assets/imgs/default.avif"
+                      alt="item__img"
+                    />
+                  </figure>
+                  <div class="library__item-text-container">
+                    <header class="library__item-header">
+                      <h2
+                        data-title=""
+                        class="library__item-heading text-clamp-2"
+                      >
+                        Eclipse of the Moon
+                      </h2>
+                    </header>
+                    <div class="attributesContainer">
+                      <span class="attribute-name">artist</span
+                      ><span class="attribute-value"> Lunar Waves</span>
+                      <span class="attribute-name">album</span
+                      ><span class="attribute-value"> Celestial Echoes</span>
+                      <span class="attribute-name">genre</span
+                      ><span class="attribute-value"> Synthwave</span>
+                      <span class="attribute-name">duration</span
+                      ><span class="attribute-value"> 3:45</span>
+                      <span class="attribute-name">releaseYear</span
+                      ><span class="attribute-value"> 2024</span>
+                    </div>
+
+                    <footer class="header__item-footer">
+                      <button data-delete-item="" class="btn btn--del">
+                        Delete
+                      </button>
+                      <button
+                        data-edit-item=""
+                        class="btn header__item-btn-edit"
+                      >
+                        Edit
+                      </button>
+                    </footer>
+                  </div>
+                </article>
+              </li>
+            </ul>
           </div>
         </div>
       </section>
@@ -445,13 +527,5 @@
     <footer class="footer">
       <small>&copy; <time>2025</time> OmniShelf, ALL RIGHTS RESERVED. </small>
     </footer>
-
-    <script>
-      // document
-      //   .querySelector("[data-add-item]")
-      //   .addEventListener("click", (e) => {
-      //     document.querySelector("[data-dialog]").showModal();
-      //   });
-    </script>
   </body>
 </html>
