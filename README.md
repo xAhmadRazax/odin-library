@@ -13,7 +13,8 @@ view project at:https://xahmadrazax.github.io/odin-library/
 ### features that are currently in
 
 - user can add only books sadly
-- user can edit books, delete books
+- user can add schema/category based on their need
+- user can edit items, delete items
 
 #### Design is bad rn need to fix later
 

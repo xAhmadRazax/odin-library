@@ -398,7 +398,17 @@
       </div>
     </template>
 
-    <dialog data-dialog></dialog>
+    <dialog data-dialog>
+      <div data-item data-confirm-modal class="model__confirm">
+        <p>Are you sure you want to delete?</p>
+        <div class="model__btn-container">
+          <button data-dialog-cancel class="btn" type="button">Cancel</button>
+          <button data-dialog-confirm type="button" class="btn btn--danger">
+            Delete
+          </button>
+        </div>
+      </div>
+    </dialog>
 
     <header class="header">
       <div class="header__container container">
@@ -527,5 +537,9 @@
     <footer class="footer">
       <small>&copy; <time>2025</time> OmniShelf, ALL RIGHTS RESERVED. </small>
     </footer>
+
+    <script>
+      // document.querySelector("[data-dialog]").showModal();
+    </script>
   </body>
 </html>

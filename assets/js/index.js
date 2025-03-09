@@ -32,21 +32,46 @@ class Library {
 
     this.myLibrary.push(item);
   }
-
-  static getLibraryItems = function () {
-    return this.myLibrary;
-  };
-  static getLibraryItem(item) {
-    if (!item instanceof LibraryItem) {
+  static updateItem(item, id) {
+    if (!item && !item instanceof LibraryItem) {
       throw new Error("invalid Library item");
     }
+    let itemIndex;
+    const oldItem = this.myLibrary.find((itemEl, index) => {
+      item.id === itemEl.id && (itemIndex = index);
+      return +id === itemEl.id;
+    });
 
-    return this.myLibrary.find((libraryItem) => item.id === libraryItem.id);
+    item.id = oldItem.id;
+    this.myLibrary.splice(itemIndex, 1, item);
+    return item;
+  }
+  static getLibraryItems = function () {
+    return this.myLibrary.slice(0);
+  };
+  static getLibraryItem(id) {
+    if (!id) {
+      throw new Error("invalid Id");
+    }
+
+    return this.myLibrary.find((libraryItem) => +id === libraryItem.id);
   }
 
   static getItemsCategory() {
     return this.myLibrary.map((el) => el.category);
   }
+
+  static deleteItem = (id) => {
+    if (!id) {
+      throw new Error("Id is not defined");
+    }
+
+    const itemIndex = this.getLibraryItems().findIndex(
+      (item) => item.id === id
+    );
+
+    this.myLibrary.splice(itemIndex, 1);
+  };
 }
 
 class LibrarySchema {
@@ -88,7 +113,7 @@ class SchemaType {
   ];
 
   constructor(category) {
-    this.id = Date.now();
+    this.id = +Date.now() * +Math.random();
     this.category = category;
   }
 
@@ -169,6 +194,7 @@ class SchemaType {
 }
 class LibraryItem {
   id;
+  schemaId;
   constructor(schema) {
     if (!schema instanceof SchemaType) {
       throw new Error("invalid Schema type");
@@ -178,7 +204,8 @@ class LibraryItem {
       this[key] = schema[key];
     }
 
-    this.id = Date.now();
+    this.schemaId = schema.id;
+    this.id = +Date.now() * +Math.random();
 
     console.log(this, "schema maa....");
   }
@@ -197,11 +224,11 @@ class LibraryItem {
         `Validator failed for ${attributeName} bad value ${value}`
       );
     }
-    this[attributeName].value = value
-      .replace(/[-_]/g, " ")
-      .split(" ")
-      .map((el) => el[0].toUpperCase() + el.slice(1))
-      .join(" ");
+    this[attributeName].value = value;
+    // .replace(/[-_]/g, " ")
+    // .split(" ")
+    // .map((el) => el[0].toUpperCase() + el.slice(1))
+    // .join(" ");
   }
 
   changeAttributeValue(attributeName, value) {
@@ -236,12 +263,18 @@ bookSchema.addAttribute("pages", "text");
 LibrarySchema.addToSchemas(bookSchema);
 
 const bookItem = new LibraryItem(bookSchema);
+bookItem.setAttributeValue("title", "A man on the run");
+bookItem.setAttributeValue("pages", "What the dog doing");
 
+Library.addItemToLibrary(bookItem);
 class ViewController {
   static #modalEl = document.querySelector("[data-dialog]");
   static #template = document
     .querySelector("[data-template]")
     .content.cloneNode(true);
+  static #confirmModalElTemplate = this.#template.querySelector(
+    "[data-confirm-modal]"
+  );
   static #templateCategoriesForm = this.#template.querySelector(
     "[data-categories-form]"
   );
@@ -251,9 +284,9 @@ class ViewController {
   static #templateLibraryItemForm = this.#template.querySelector(
     "[data-library-item-form]"
   );
-  static #templateLibraryItem = this.#template.querySelector(
-    "[data-library-item]"
-  );
+  // static #templateLibraryItem = this.#template.querySelector(
+  //   "[data-library-item]"
+  // );
   static #showModal() {
     if (!this.#modalEl) {
       throw new Error("Modal dialog does not exist.");
@@ -339,8 +372,13 @@ class ViewController {
     filterSelect.value = selectedCategory;
   }
 
-  static #appendCardToDom(itemData) {
-    const cardContainerEl = document.querySelector("[data-library-list]");
+  static #appendCardToDom(
+    itemData,
+    parentContainer = null,
+    updateFilter = true
+  ) {
+    const cardContainerEl =
+      parentContainer || document.querySelector("[data-library-list]");
 
     const libraryItemContainer = document.createElement("li");
     libraryItemContainer.classList.add("library__item");
@@ -369,7 +407,12 @@ class ViewController {
     );
     const dataAttributes = libraryItem.querySelector("[data-attributes]");
     for (const [key, value] of Object.entries(itemData)) {
-      if (key === "id" || key === "category" || key === "hasImage") {
+      if (
+        key === "id" ||
+        key === "category" ||
+        key === "hasImage" ||
+        key === "schemaId"
+      ) {
         continue;
       }
       if (key === "hasImage" && itemData[key]) {
@@ -395,16 +438,39 @@ class ViewController {
         );
       }
     }
-    console.log(itemData.category);
 
-    this.#updateFilter(itemData.category.toLowerCase());
+    updateFilter && this.#updateFilter(itemData.category.toLowerCase());
 
     libraryItemContainer.append(libraryItem);
     cardContainerEl.append(libraryItemContainer);
 
     // append card
   }
-  static appendChildrenToModal(children) {}
+  // static appendChildrenToModal(children) {}
+
+  static #renderItemsDOM = (category) => {
+    const filterCategory = category || Library.getItemsCategory().at(-1);
+    if (!filterCategory) {
+      return;
+    }
+    // for initial rendering items
+    // when we want to do is to check if the there is items on the library list get the last items category
+    // and render all items based on that category
+    const libraryItems = Library.getLibraryItems().filter(
+      (item) => item.category === filterCategory
+    );
+
+    const libraryItemContainerFrag = document.createDocumentFragment();
+
+    libraryItems.forEach((item) => {
+      this.#appendCardToDom(item, libraryItemContainerFrag, false);
+    });
+
+    const libraryItemContainer = document.querySelector("[data-library-list]");
+    libraryItemContainer.replaceChildren();
+    libraryItemContainer.append(libraryItemContainerFrag);
+    this.#updateFilter(filterCategory);
+  };
   static init() {
     const addLibraryBtnClickHandler = (e) => {
       if (e.target.closest("[data-add-library-item]")) {
@@ -494,19 +560,190 @@ class ViewController {
           .insertBefore(schemaFormAttributeContainer, e.target);
       }
     };
+    const createNewCategorySelectionHandler = (e, category) => {
+      if (category === "create-new-schema") {
+        const dialog = e.target.closest("[data-dialog]");
+        dialog.classList.add("ani_slideToLeftSlideInFromRight");
 
-    // add event delegation for most of events
-    document.addEventListener("click", (e) => {
-      // handling add new item button
-      addLibraryBtnClickHandler(e);
+        setTimeout(() => {
+          dialog.classList.remove("ani_slideToLeftSlideInFromRight");
+        }, 1000);
 
-      // handling adding more attributes to the schema
-      schemaFormAddAttributesHandler(e);
-      return;
-    });
+        // adding the form after the dialog is out of scrren
+        setTimeout(() => {
+          const schemaFormAttributeContainer = document.createElement("div");
+          schemaFormAttributeContainer.classList.add(
+            "form-control__group",
+            "grid-col-2-70-30"
+          );
 
-    // handling form delegation events
-    document.addEventListener("submit", (e) => {
+          schemaFormAttributeContainer.insertAdjacentHTML(
+            "afterbegin",
+            `       
+    
+              <div class="form-control">
+                <label class="form-control__label" for="title">
+                  Field Name</label
+                >
+                <input
+                  type="text"
+                  class="form-control__input"
+                  id="title"
+                  required
+                  min="2"
+                  name="attribute-name-1"
+                  value="title"
+                  readonly
+                  disable
+                />
+              </div>
+              <div class="form-control">
+                <label class="form-control__label" for="attribute-type-1">
+                  Field Type</label
+                >
+                <select name="attribute-type-1" id="attribute-type-1" class="form-control__input">
+                  <option value="text">Text</option>
+                </select>
+              </div>
+        `
+          );
+
+          const templateCategorySchemaForm =
+            this.#templateCategorySchemaForm.cloneNode(true);
+
+          const schemaFormFieldContainer =
+            templateCategorySchemaForm.querySelector(
+              "[data-form-field-container]"
+            );
+          schemaFormFieldContainer.replaceChildren();
+          schemaFormFieldContainer.append(schemaFormAttributeContainer);
+          schemaFormFieldContainer.insertAdjacentHTML(
+            "beforeend",
+            `            <button data-add-schema-attribute class="btn" type="button">
+          Add another field
+        </button>`
+          );
+
+          schemaFormFieldContainer.insertAdjacentHTML(
+            "afterbegin",
+            `              <div class="form-control">
+            <label class="form-control__label" for="category">Category Name</label>
+            <input
+              type="text"
+              class="form-control__input"
+              id="category"
+              required
+              min="2"
+              name="category"
+            />
+          </div>`
+          );
+          this.#replaceModalChildren(templateCategorySchemaForm);
+        }, 500);
+        // slide the form to the left and remove > add a new form > slide from right to middle
+      }
+    };
+
+    const populatingLibraryItemForm = (id, item = null) => {
+      const itemSchema = item || LibrarySchema.getSchema(id);
+      const libraryItemForm = this.#templateLibraryItemForm.cloneNode(true);
+      libraryItemForm.setAttribute("data-id", itemSchema.id);
+      const formTitle = libraryItemForm.querySelector("[data-form-title]");
+      const formFieldsContainer = libraryItemForm.querySelector(
+        "[data-form-field-container]"
+      );
+
+      formFieldsContainer.replaceChildren();
+      const textAreaFieldsFrag = document.createDocumentFragment();
+      // note fields group are of 2 column
+      const formControlGroup = document.createElement("div");
+      formControlGroup.classList.add("form-control__group");
+      for (const key in itemSchema) {
+        if (key === "id" || key === "hasImage" || key === "schemaId") {
+          continue;
+        }
+
+        if (key === "category") {
+          formTitle.textContent = `${item ? "Editing" : ""} ${
+            itemSchema[key]
+          } Info`;
+        } else if (itemSchema[key].type === "textArea") {
+          const formControlEl = document.createElement("div");
+          formControlEl.classList.add("form-control");
+
+          formControlEl.insertAdjacentHTML(
+            "afterbegin",
+
+            `
+              <label class="form-control__label" for="${key.toLowerCase()}">${key}</label>
+              <textarea
+              name="${key}"
+              required
+              class="form-control__input"
+              id="${key.toLowerCase()}"
+              rows="4"
+              >${
+                item
+                  ? (itemSchema[key].value || "")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                  : ""
+              }</textarea>
+              `
+          );
+
+          textAreaFieldsFrag.append(formControlEl);
+        } else {
+          formControlGroup.insertAdjacentHTML(
+            "beforeend",
+            `
+            <div class="form-control">
+            <label class="form-control__label" for="${key.toLowerCase()}">${key}</label>
+            <input
+              type="${itemSchema[key].type || "text"}"
+              class="form-control__input"
+              id="${key.toLowerCase()}"
+              required
+              min="2"
+              name="${key}"
+              value="${item ? itemSchema[key]?.value : ""}"
+            />
+          </div>`
+          );
+        }
+      }
+
+      formFieldsContainer.append(formControlGroup, textAreaFieldsFrag);
+
+      if (item) {
+        libraryItemForm.setAttribute("data-schema-id", itemSchema.schemaId);
+
+        libraryItemForm.removeAttribute("data-library-item-form");
+        libraryItemForm.setAttribute("data-library-item-update-form", "");
+        const submissionBtn =
+          libraryItemForm.querySelector("[data-form-submit]");
+
+        submissionBtn.textContent = "Save";
+      }
+      return libraryItemForm;
+    };
+    const createNewLibraryItemFormHandler = (e, id) => {
+      if (LibrarySchema.getSchema(id)) {
+        const libraryItemFormEl = populatingLibraryItemForm(id);
+
+        const dialog = e.target.closest("[data-dialog]");
+        dialog.classList.add("ani_slideToLeftSlideInFromRight");
+        setTimeout(() => {
+          dialog.classList.remove("ani_slideToLeftSlideInFromRight");
+        }, 1000);
+
+        setTimeout(() => {
+          this.#replaceModalChildren(libraryItemFormEl);
+        }, 500);
+      }
+    };
+
+    const categoryFormSubmissionHandler = (e) => {
       if (e.target.closest("[data-categories-form ]")) {
         e.preventDefault();
 
@@ -518,170 +755,19 @@ class ViewController {
           window.location.replace(window.location.href);
         }
 
-        if (category === "create-new-schema") {
-          const dialog = e.target.closest("[data-dialog]");
-          dialog.classList.add("ani_slideToLeftSlideInFromRight");
-
-          setTimeout(() => {
-            dialog.classList.remove("ani_slideToLeftSlideInFromRight");
-          }, 1000);
-
-          // adding the form after the dialog is out of scrren
-          setTimeout(() => {
-            const schemaFormAttributeContainer = document.createElement("div");
-            schemaFormAttributeContainer.classList.add(
-              "form-control__group",
-              "grid-col-2-70-30"
-            );
-
-            schemaFormAttributeContainer.insertAdjacentHTML(
-              "afterbegin",
-              `       
-        
-                  <div class="form-control">
-                    <label class="form-control__label" for="title">
-                      Field Name</label
-                    >
-                    <input
-                      type="text"
-                      class="form-control__input"
-                      id="title"
-                      required
-                      min="2"
-                      name="attribute-name-1"
-                      value="title"
-                      readonly
-                      disable
-                    />
-                  </div>
-                  <div class="form-control">
-                    <label class="form-control__label" for="attribute-type-1">
-                      Field Type</label
-                    >
-                    <select name="attribute-type-1" id="attribute-type-1" class="form-control__input">
-                      <option value="text">Text</option>
-                    </select>
-                  </div>
-            `
-            );
-
-            const templateCategorySchemaForm =
-              this.#templateCategorySchemaForm.cloneNode(true);
-
-            const schemaFormFieldContainer =
-              templateCategorySchemaForm.querySelector(
-                "[data-form-field-container]"
-              );
-            schemaFormFieldContainer.replaceChildren();
-            schemaFormFieldContainer.append(schemaFormAttributeContainer);
-            schemaFormFieldContainer.insertAdjacentHTML(
-              "beforeend",
-              `            <button data-add-schema-attribute class="btn" type="button">
-              Add another field
-            </button>`
-            );
-
-            schemaFormFieldContainer.insertAdjacentHTML(
-              "afterbegin",
-              `              <div class="form-control">
-                <label class="form-control__label" for="category">Category Name</label>
-                <input
-                  type="text"
-                  class="form-control__input"
-                  id="category"
-                  required
-                  min="2"
-                  name="category"
-                />
-              </div>`
-            );
-            this.#replaceModalChildren(templateCategorySchemaForm);
-          }, 500);
-          // slide the form to the left and remove > add a new form > slide from right to middle
-        }
+        // if user select create new category in the form
+        // append create new category form in the dialog
+        createNewCategorySelectionHandler(e, category);
 
         // showing add library item form
-
-        if (LibrarySchema.getSchema(category)) {
-          const itemSchema = LibrarySchema.getSchema(category);
-          console.log(Object.keys(itemSchema));
-          const libraryItemForm = this.#templateLibraryItemForm.cloneNode(true);
-          libraryItemForm.setAttribute("data-category", itemSchema.id);
-          const formTitle = libraryItemForm.querySelector("[data-form-title]");
-          const formFieldsContainer = libraryItemForm.querySelector(
-            "[data-form-field-container]"
-          );
-
-          formFieldsContainer.replaceChildren();
-          const textAreaFieldsFrag = document.createDocumentFragment();
-          // note fields group are of 2 column
-          const formControlGroup = document.createElement("div");
-          formControlGroup.classList.add("form-control__group");
-          for (const key in itemSchema) {
-            if (key === "id" || key === "hasImage") {
-              continue;
-            }
-
-            if (key === "category") {
-              formTitle.textContent = `${itemSchema[key]} Info`;
-            } else if (itemSchema[key].type === "textArea") {
-              const formControlEl = document.createElement("div");
-              formControlEl.classList.add("form-control");
-
-              formControlEl.insertAdjacentHTML(
-                "afterbegin",
-
-                `
-                  <label class="form-control__label" for="${key.toLowerCase()}">${key}</label>
-                  <textarea
-                  name="${key}"
-                  required
-                  class="form-control__input"
-                  id="${key.toLowerCase()}"
-                  rows="4"
-                  ></textarea>
-                  `
-              );
-
-              textAreaFieldsFrag.append(formControlEl);
-            } else {
-              formControlGroup.insertAdjacentHTML(
-                "beforeend",
-                `
-                <div class="form-control">
-                <label class="form-control__label" for="${key.toLowerCase()}">${key}</label>
-                <input
-                  type="${itemSchema[key].type || "text"}"
-                  class="form-control__input"
-                  id="${key.toLowerCase()}"
-                  required
-                  min="2"
-                  name="${key}"
-                />
-              </div>`
-              );
-            }
-          }
-
-          formFieldsContainer.append(formControlGroup, textAreaFieldsFrag);
-
-          const dialog = e.target.closest("[data-dialog]");
-          dialog.classList.add("ani_slideToLeftSlideInFromRight");
-          setTimeout(() => {
-            dialog.classList.remove("ani_slideToLeftSlideInFromRight");
-          }, 1000);
-
-          setTimeout(() => {
-            this.#replaceModalChildren(libraryItemForm);
-          }, 500);
-        }
+        createNewLibraryItemFormHandler(e, category);
+        return;
       }
+    };
 
-      // categoryFormSchema submission handling
-
+    const categorySchemaFormSubmissionHandler = (e) => {
       if (e.target.closest("[data-category-schema-form]")) {
         const formData = new FormData(e.target);
-        console.log(formData);
         const data = {};
 
         let attributeName;
@@ -717,11 +803,12 @@ class ViewController {
         // Log the data (or send it to a server)
         // console.log("Form Data:", data);
       }
+    };
 
-      // library item form subbmission handler
+    const libraryItemFormSubmissionHandler = (e) => {
       if (e.target.closest("[data-library-item-form]")) {
         const formData = new FormData(e.target);
-        const itemSchema = LibrarySchema.getSchema(e.target.dataset.category);
+        const itemSchema = LibrarySchema.getSchema(e.target.dataset.id);
         const libraryItem = new LibraryItem(itemSchema);
 
         for (const [key, value] of formData.entries()) {
@@ -735,19 +822,128 @@ class ViewController {
         //  adding card to the Dom
         console.log(libraryItem);
 
-        this.#appendCardToDom(libraryItem);
+        // this.#appendCardToDom(libraryItem);
+        // rerendering all items on the same as dont
+        // have  functional to add different items on differencet section
+        // so we will rerender all items based on the item category that
+        // we are adding
+        this.#renderItemsDOM(libraryItem.category);
       }
+    };
+    const closeModalHandler = (e) => {
+      if (
+        e.target.matches("[data-dialog]") ||
+        e.target.closest("[data-dialog-cancel]")
+      ) {
+        this.#modalEl.close();
+      }
+    };
 
+    const confirmDeleteItemDialogBtnHandler = (e) => {
+      if (e.target.matches("[data-dialog-confirm]")) {
+        const itemID = e.target.closest("[data-delete-item-id]").dataset
+          .deleteItemId;
+        if (!itemID) return this.#closeModal();
+        const item = document.querySelector(`[data-item="${itemID}"]`);
+
+        console.log(item);
+        Library.deleteItem(itemID);
+
+        item.remove();
+
+        this.#closeModal();
+      }
+    };
+    const deleteItemBtnClickHandler = (e) => {
+      if (e.target.closest("[data-delete-item]")) {
+        const confirmModalEl = this.#confirmModalElTemplate.cloneNode(true);
+        const itemID = e.target.closest("[data-item]").dataset.item;
+        confirmModalEl.setAttribute("data-delete-item-id", itemID);
+        this.#replaceModalChildren(confirmModalEl);
+        this.#showModal();
+      }
+    };
+
+    const editItemBtnClickHandler = (e) => {
+      if (e.target.closest("[ data-edit-item]")) {
+        const itemID = e.target.closest("[data-item]").dataset.item;
+        console.log(itemID, e.target.closest("[data-item]"));
+        const item = Library.getLibraryItem(itemID);
+        const itemSchemaID = LibrarySchema.getSchema(item.schemaId);
+
+        if (itemSchemaID) {
+          const libraryItemFormEl = populatingLibraryItemForm(
+            itemSchemaID,
+            item
+          );
+
+          this.#replaceModalChildren(libraryItemFormEl);
+
+          this.#showModal();
+        }
+      }
+    };
+
+    const editItemFormSubmissionHandler = (e) => {
+      if (e.target.matches("[data-library-item-update-form]")) {
+        const formData = new FormData(e.target);
+        const itemID = e.target.dataset.id;
+        const itemSchemaID = e.target.dataset.schemaId;
+        const itemSchema = LibrarySchema.getSchema(itemSchemaID);
+        const libraryItem = new LibraryItem(itemSchema);
+
+        for (const [key, value] of formData.entries()) {
+          libraryItem.setAttributeValue(key, value);
+        }
+        const updatedItem = Library.updateItem(libraryItem, itemID);
+
+        this.#showPopUp(`${libraryItem.category} item has been updated`);
+
+        console.log(libraryItem);
+
+        const frag = document.createDocumentFragment();
+        this.#appendCardToDom(updatedItem, frag);
+
+        document.querySelector(`[data-item='${itemID}']`).replaceWith(frag);
+      }
+    };
+    // add event delegation for most of events
+    document.addEventListener("click", (e) => {
+      // console.log(e.target);
+
+      deleteItemBtnClickHandler(e);
+
+      closeModalHandler(e);
+
+      // handling add new item button
+      addLibraryBtnClickHandler(e);
+
+      // handling adding more attributes to the schema
+      schemaFormAddAttributesHandler(e);
+
+      editItemBtnClickHandler(e);
+
+      confirmDeleteItemDialogBtnHandler(e);
       return;
     });
+
+    // handling form delegation events
+    document.addEventListener("submit", (e) => {
+      categoryFormSubmissionHandler(e);
+      // categoryFormSchema submission handling
+      categorySchemaFormSubmissionHandler(e);
+      // library item form submission handler
+      libraryItemFormSubmissionHandler(e);
+
+      // library edit form
+
+      editItemFormSubmissionHandler(e);
+      return;
+    });
+
+    this.#renderItemsDOM();
   }
 }
 document.addEventListener("DOMContentLoaded", (e) => {
   ViewController.init();
 });
-console.log(
-  document
-    .querySelector("[data-template]")
-    .content.cloneNode(true)
-    .querySelector("[data-library-item ]")
-);
