@@ -1,48 +1,49 @@
 const myLibrary = [];
 
-function Book(
-  title,
-  author,
-  genre,
-  ratings = 0,
-  desc,
-  status = "reading",
-  totalPages,
-  pagesRead = 0,
-  imgURL
-) {
-  this.title = title;
-  this.author = author;
-  this.genre = genre;
-  this.ratings = ratings;
-  this.desc = desc;
-  this.status = status;
-  this.totalPages = totalPages;
-  this.pagesRead = pagesRead;
-  this.imgURL = imgURL;
+class Book {
+  constructor(
+    title,
+    author,
+    genre,
+    ratings = 0,
+    desc,
+    status = "reading",
+    totalPages,
+    pagesRead = 0,
+    imgURL
+  ) {
+    this.title = title;
+    this.author = author;
+    this.genre = genre;
+    this.ratings = ratings;
+    this.desc = desc;
+    this.status = status;
+    this.totalPages = totalPages;
+    this.pagesRead = pagesRead;
+    this.imgURL = imgURL;
+  }
+  updateBook = function (
+    title,
+    author,
+    genre,
+    ratings = 0,
+    desc,
+    status = "reading",
+    totalPages,
+    pagesRead = 0,
+    imgURL
+  ) {
+    this.title = title;
+    this.author = author;
+    this.genre = genre;
+    this.ratings = ratings;
+    this.desc = desc;
+    this.status = status;
+    this.totalPages = totalPages;
+    this.pagesRead = pagesRead;
+    this.imgURL = imgURL;
+  };
 }
-
-Book.prototype.updateBook = function (
-  title,
-  author,
-  genre,
-  ratings = 0,
-  desc,
-  status = "reading",
-  totalPages,
-  pagesRead = 0,
-  imgURL
-) {
-  this.title = title;
-  this.author = author;
-  this.genre = genre;
-  this.ratings = ratings;
-  this.desc = desc;
-  this.status = status;
-  this.totalPages = totalPages;
-  this.pagesRead = pagesRead;
-  this.imgURL = imgURL;
-};
 
 function isValidURL(url) {
   try {
